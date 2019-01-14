@@ -1,6 +1,6 @@
 import isql
 
-db_connection = isql.open("test_configuration")
+db_connection = isql.db_open("test_configuration")
 
 result = isql.q(db_connection, """
         SELECT %s AS test_field 

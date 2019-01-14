@@ -4,7 +4,7 @@ import pymssql
 import time
 import dbconf
 
-def open(sql_conf_name):
+def db_open(sql_conf_name):
     if sql_conf_name not in dbconf.sql_configurations:
         raise Exception(sql_conf_name + ' not found in configuration table')
     cfg = dbconf.sql_configurations[sql_conf_name]
