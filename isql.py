@@ -68,6 +68,15 @@ def _mssql_open(sql_conf):
 
     return db
 
+def _mssql_row_gen(cursor):
+    while True:
+        rows = cursor.fetchmany(100)
+        if len(rows) == 0:
+            break;
+
+        for r in rows:
+            yield r
+
 
 def _mssql_q(db_ctx, query, args):
     conn = _get_conn(db_ctx)
@@ -75,7 +84,7 @@ def _mssql_q(db_ctx, query, args):
 
     res = None;
     c.execute(query, args)
-    res = c.fetchall();
+    res = _mssql_row_gen(c);
 
     return res
 
@@ -122,13 +131,23 @@ def _mysql_close(db_ctx):
     conn = _get_conn(db_ctx)
     conn.close()
 
+def _mysql_row_gen(cursor):
+    while True:
+        rows = cursor.fetchmany(100)
+        if len(rows) == 0:
+            break;
+
+        for r in rows:
+            yield r
+
+
 def _mysql_q(db_ctx, query, args):
     conn = _get_conn(db_ctx)
     c = conn.cursor()
     res = None
     try:
         c.execute(query, args)
-        res = c.fetchall()
+        res = _mysql_row_gen(c)
     except MySQLdb.Error, e:
         try:
             print(e)
