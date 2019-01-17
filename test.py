@@ -1,15 +1,17 @@
 import isql
 
-db_connection = isql.db_open("test_configuration")
+test_conn = isql.db_open("test_configuration")
 
-result = isql.q(db_connection, """
-        SELECT %s AS test_field 
+result = isql.q(test_conn, """
+        SELECT something FROM test_table
+        WHERE
+        name LIKE %s
         """,
-            ("test_content",)
+            ("AAA%",)
         )
 
 for r in result:
-    print(r["test_field"])
+    print(r["something"])
 
-isql.close(db_connection)
+isql.db_close(test_conn)
 

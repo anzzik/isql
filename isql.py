@@ -7,12 +7,12 @@ import dbconf
 def db_open(sql_conf_name):
     if sql_conf_name not in dbconf.sql_configurations:
         raise Exception(sql_conf_name + ' not found in configuration table')
+
     cfg = dbconf.sql_configurations[sql_conf_name]
-
     conn = sql_libs[cfg["sql_type"]]["open"](sql_conf_name)
-
     ctx = {
             "conn": conn,
+            "result_max_size": 0,
             "sql_type": cfg["sql_type"]
             }
 
@@ -21,16 +21,14 @@ def db_open(sql_conf_name):
 def q(db_ctx, q, args):
     fn = _get_lib_fn(db_ctx, "q")
     res = fn(db_ctx, q, args)
-
     return res
 
 def q_many(db_ctx, q, args):
     fn = _get_lib_fn(db_ctx, "q_many")
     res = fn(db_ctx, q, args)
-
     return res
 
-def close(db_ctx):
+def db_close(db_ctx):
     fn = _get_lib_fn(db_ctx, "close")
     res = fn(db_ctx)
 
@@ -45,10 +43,16 @@ def rollback(db_ctx):
 def now():
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
+def set_result_maxsize(db_ctx, size):
+    db_ctx['result_max_size'] = size;
+
+def get_result_maxsize(db_ctx):
+    return db_ctx["result_max_size"]
+
+
 def _get_lib_fn(db_ctx, fn_name):
     sql_type = db_ctx["sql_type"]
     fn = sql_libs[db_ctx["sql_type"]][fn_name]
-
     return fn
 
 def _get_conn(db_ctx):
@@ -68,12 +72,12 @@ def _mssql_open(sql_conf):
 
     return db
 
-def _mssql_row_gen(cursor):
+def _mssql_row_gen(db_ctx, cursor):
+    r_max_size = get_result_maxsize(db_ctx)
     while True:
-        rows = cursor.fetchmany(100)
+        rows = cursor.fetchmany(r_max_size)
         if len(rows) == 0:
             break;
-
         for r in rows:
             yield r
 
@@ -81,10 +85,15 @@ def _mssql_row_gen(cursor):
 def _mssql_q(db_ctx, query, args):
     conn = _get_conn(db_ctx)
     c = conn.cursor()
+    r_max_size = db_ctx['result_max_size']
 
     res = None;
     c.execute(query, args)
-    res = _mssql_row_gen(c);
+
+    if r_max_size > 0:
+        res = _mssql_row_gen(db_ctx, c)
+    else:
+        res = c.fetchall()
 
     return res
 
@@ -131,23 +140,27 @@ def _mysql_close(db_ctx):
     conn = _get_conn(db_ctx)
     conn.close()
 
-def _mysql_row_gen(cursor):
+def _mysql_row_gen(db_ctx, cursor):
+    r_max_size = get_result_maxsize(db_ctx)
     while True:
-        rows = cursor.fetchmany(100)
+        rows = cursor.fetchmany(r_max_size)
         if len(rows) == 0:
             break;
-
         for r in rows:
             yield r
-
 
 def _mysql_q(db_ctx, query, args):
     conn = _get_conn(db_ctx)
     c = conn.cursor()
+    r_max_size = db_ctx['result_max_size'];
     res = None
     try:
         c.execute(query, args)
-        res = _mysql_row_gen(c)
+        if r_max_size > 0:
+            res = _mysql_row_gen(db_ctx, c)
+        else:
+            res = c.fetchall()
+
     except MySQLdb.Error, e:
         try:
             print(e)
