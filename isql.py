@@ -161,13 +161,13 @@ def _mysql_q(db_ctx, query, args):
         else:
             res = c.fetchall()
 
-    except MySQLdb.Error, e:
+    except MySQLdb.Error as e:
         try:
             print(e)
-            print "MySQL Error [%d]: %s (%s)" % (e.args[0], e.args[1], query)
+            print("MySQL Error [%d]: %s (%s)" % (e.args[0], e.args[1], query))
             quit()
         except IndexError:
-            print "MySQL Error: %s" % str(e)
+            print("MySQL Error: %s" % str(e))
             quit()
 
     return res
