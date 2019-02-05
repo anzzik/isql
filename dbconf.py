@@ -6,7 +6,7 @@ sql_configurations = {
         "passwd": "mysql_password",
         "db": "mysql_testdb",
         "charset": "utf8",
-        "autofetch" True,
+        "autofetch": True,
         "autocommit": False 
         },
     "test_configuration2": {
@@ -16,7 +16,7 @@ sql_configurations = {
         "passwd": "mssql_password",
         "db": "mssql_testdb",
         "charset": "utf8",
-        "autofetch" True,
+        "autofetch": True,
         "autocommit": False 
         },
 }
