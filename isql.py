@@ -13,7 +13,8 @@ def db_open(sql_conf_name):
     ctx = {
             "conn": conn,
             "result_max_size": 0,
-            "sql_type": cfg["sql_type"]
+            "sql_type": cfg["sql_type"],
+            "autofetch": cfg["autofetch"],
             }
 
     return ctx
@@ -43,12 +44,14 @@ def rollback(db_ctx):
 def now():
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
+def set_autofetch(db_ctx, state):
+    db_ctx["autofetch"] = state
+
 def set_result_maxsize(db_ctx, size):
     db_ctx['result_max_size'] = size;
 
 def get_result_maxsize(db_ctx):
     return db_ctx["result_max_size"]
-
 
 def _get_lib_fn(db_ctx, fn_name):
     sql_type = db_ctx["sql_type"]
@@ -90,10 +93,11 @@ def _mssql_q(db_ctx, query, args):
     res = None;
     c.execute(query, args)
 
-    if r_max_size > 0:
-        res = _mssql_row_gen(db_ctx, c)
-    else:
-        res = c.fetchall()
+    if db_ctx["autofetch"] == True:
+        if r_max_size > 0:
+            res = _mssql_row_gen(db_ctx, c)
+        else:
+            res = c.fetchall()
 
     return res
 
@@ -103,7 +107,9 @@ def _mssql_q_many(db_ctx, query, args):
 
     res = None;
     c.executemany(query, args)
-    res = c.fetchall();
+
+    if db_ctx["autofetch"] == True:
+        res = c.fetchall();
 
     return res
 
@@ -156,10 +162,11 @@ def _mysql_q(db_ctx, query, args):
     res = None
     try:
         c.execute(query, args)
-        if r_max_size > 0:
-            res = _mysql_row_gen(db_ctx, c)
-        else:
-            res = c.fetchall()
+        if db_ctx["autofetch"] == True:
+            if r_max_size > 0:
+                res = _mysql_row_gen(db_ctx, c)
+            else:
+                res = c.fetchall()
 
     except MySQLdb.Error as e:
         try:
