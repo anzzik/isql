@@ -41,6 +41,10 @@ def rollback(db_ctx):
     fn = _get_lib_fn(db_ctx, "rollback")
     res = fn(db_ctx)
 
+def free_result(db_ctx):
+    fn = _get_lib_fn(db_ctx, "free_result")
+    res = fn(db_ctx)
+
 def now():
     return time.strftime("%Y-%m-%d %H:%M:%S")
 
@@ -84,6 +88,10 @@ def _mssql_row_gen(db_ctx, cursor):
         for r in rows:
             yield r
 
+def _mssql_free_result(db_ctx):
+    conn = _get_conn(db_ctx)
+    c = conn.cursor()
+    c.close()
 
 def _mssql_q(db_ctx, query, args):
     conn = _get_conn(db_ctx)
@@ -155,6 +163,11 @@ def _mysql_row_gen(db_ctx, cursor):
         for r in rows:
             yield r
 
+def _mysql_free_result(db_ctx):
+    conn = _get_conn(db_ctx)
+    c = conn.cursor()
+    c.close()
+
 def _mysql_q(db_ctx, query, args):
     conn = _get_conn(db_ctx)
     c = conn.cursor()
@@ -199,7 +212,8 @@ sql_libs = {
             "q": _mysql_q,
             "q_many": _mysql_q_many,
             "commit": _mysql_commit,
-            "rollback": _mysql_rollback
+            "rollback": _mysql_rollback,
+            "free_result": _mysql_free_result,
             },
         "mssql": {
             "open": _mssql_open,
@@ -207,7 +221,8 @@ sql_libs = {
             "q": _mssql_q,
             "q_many": _mssql_q_many,
             "commit": _mssql_commit,
-            "rollback": _mssql_rollback
+            "rollback": _mssql_rollback,
+            "free_result": _mssql_free_result,
             }
         }
 
