@@ -57,6 +57,11 @@ def set_result_maxsize(db_ctx, size):
 def get_result_maxsize(db_ctx):
     return db_ctx["result_max_size"]
 
+def last_insert_id(db_ctx):
+    fn = _get_lib_fn(db_ctx, "last_insert_id")
+    return fn(db_ctx)
+
+
 def _get_lib_fn(db_ctx, fn_name):
     sql_type = db_ctx["sql_type"]
     fn = sql_libs[db_ctx["sql_type"]][fn_name]
@@ -154,6 +159,10 @@ def _mysql_close(db_ctx):
     conn = _get_conn(db_ctx)
     conn.close()
 
+def _mysql_last_insert_id(db_ctx):
+    conn = _get_conn(db_ctx)
+    return conn.insert_id()
+
 def _mysql_row_gen(db_ctx, cursor):
     r_max_size = get_result_maxsize(db_ctx)
     while True:
@@ -214,6 +223,7 @@ sql_libs = {
             "commit": _mysql_commit,
             "rollback": _mysql_rollback,
             "free_result": _mysql_free_result,
+            "last_insert_id": _mysql_last_insert_id,
             },
         "mssql": {
             "open": _mssql_open,
