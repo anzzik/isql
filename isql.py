@@ -78,7 +78,7 @@ def _mssql_open(sql_conf):
             password = conf["passwd"],
             database = conf["db"],
             charset = conf["charset"],
-            as_dict = True,
+            as_dict = conf["as_dict"],
             autocommit = conf["autocommit"]
             )
 
@@ -139,8 +139,13 @@ def _mssql_rollback(db_ctx):
     conn.rollback()
 
 def _mysql_open(sql_conf):
-    c_class = MySQLdb.cursors.DictCursor
     conf = dbconf.sql_configurations[sql_conf]
+
+    if conf["as_dict"] == True:
+        c_class = MySQLdb.cursors.DictCursor
+    else:
+        c_class = MySQLdb.cursors.Cursor
+
 
     db = MySQLdb.connect(
             host = conf["host"],
