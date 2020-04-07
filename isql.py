@@ -4,11 +4,13 @@ import pymssql
 import time
 import dbconf
 
+sql_configs = dbconf.sql_configurations
+
 def db_open(sql_conf_name):
-    if sql_conf_name not in dbconf.sql_configurations:
+    if sql_conf_name not in sql_configs:
         raise Exception(sql_conf_name + ' not found in configuration table')
 
-    cfg = dbconf.sql_configurations[sql_conf_name]
+    cfg = sql_configs[sql_conf_name]
     conn = sql_libs[cfg["sql_type"]]["open"](sql_conf_name)
     ctx = {
             "conn": conn,
@@ -18,6 +20,10 @@ def db_open(sql_conf_name):
             }
 
     return ctx
+
+def override_configs(dbconf_module):
+    global sql_configs
+    sql_configs = dbconf_module.sql_configurations
 
 def q(db_ctx, q, args):
     fn = _get_lib_fn(db_ctx, "q")
@@ -71,7 +77,7 @@ def _get_conn(db_ctx):
     return db_ctx["conn"]
 
 def _mssql_open(sql_conf):
-    conf = dbconf.sql_configurations[sql_conf]
+    conf = sql_configs[sql_conf]
     db = pymssql.connect(
             server = conf["host"],
             user = conf["user"],
@@ -139,7 +145,7 @@ def _mssql_rollback(db_ctx):
     conn.rollback()
 
 def _mysql_open(sql_conf):
-    conf = dbconf.sql_configurations[sql_conf]
+    conf = sql_configs[sql_conf]
 
     if conf["as_dict"] == True:
         c_class = MySQLdb.cursors.DictCursor
