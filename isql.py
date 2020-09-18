@@ -78,14 +78,32 @@ def _get_conn(db_ctx):
 
 def _mssql_open(sql_conf):
     conf = sql_configs[sql_conf]
+
+    conn_props = [
+	    "SET ARITHABORT ON;",
+	    "SET CONCAT_NULL_YIELDS_NULL ON;",
+	    "SET ANSI_NULLS ON;",
+	    "SET ANSI_NULL_DFLT_ON ON;",
+	    "SET ANSI_PADDING ON;",
+	    "SET ANSI_WARNINGS ON;",
+	    "SET ANSI_NULL_DFLT_ON ON;",
+	    "SET CURSOR_CLOSE_ON_COMMIT ON;",
+	    "SET QUOTED_IDENTIFIER ON;",
+	    "SET TEXTSIZE 2147483647;",
+	    ]
+
+    if conf['isolation'] == "snapshot":
+        conn_props.append("SET TRANSACTION ISOLATION LEVEL SNAPSHOT;")
+
     db = pymssql.connect(
-            server = conf["host"],
+	    server = conf["host"],
             user = conf["user"],
             password = conf["passwd"],
             database = conf["db"],
             charset = conf["charset"],
             as_dict = conf["as_dict"],
-            autocommit = conf["autocommit"]
+            autocommit = conf["autocommit"],
+	    conn_properties = conn_props,
             )
 
     return db
